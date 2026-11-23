@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wohnung B 001 · URSINIA, Wagerenstrasse 17, Uster · 3D</title>
+<meta name="description" content="3D-Animation der 4.5-Zimmer-Gartenwohnung B 001 im Neubauprojekt URSINIA, Wagerenstrasse 17, Uster. Inoffizielle Visualisierung.">
+<link rel="icon" href="data:,">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+<style>
+  :root { --ink:#3a2a24; --mauve:#7a5a46; --paper:#f7f2ea; --line:#e2d6c6; --muted:#7f7068; --peach:#efb97f; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#e9e4dd; color:var(--ink);
+    font: 15px/1.45 "Avenir Next", "Segoe UI", system-ui, sans-serif; }
+  #scene { position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+  #labels { position:fixed; inset:0; pointer-events:none; overflow:hidden; }
+  .label { position:absolute; left:0; top:0; text-align:center; white-space:nowrap; font-size:12px; line-height:1.2;
+    padding:4px 8px; border-radius:6px; background:rgba(246,242,236,.86); transition:opacity .25s, background .2s; cursor:pointer; }
+  .label b { display:block; font-weight:600; }
+  .label span { color:var(--muted); font-variant-numeric:tabular-nums; }
+  .label.active { background:var(--mauve); color:#fff; } .label.active span { color:#f3e2cf; }
+  .label.out { background:rgba(255,255,255,.7); }
+  .label.north { background:none; color:var(--mauve); font-size:14px; }
+  .label.building { background:var(--ink); color:#fff; } .label.building span { color:#e8d9c8; }
+
+  #panel { position:fixed; top:0; right:0; bottom:0; width:360px; background:var(--paper); border-left:1px solid var(--line);
+    display:flex; flex-direction:column; z-index:3; }
+  header { padding:22px 22px 14px; border-bottom:1px solid var(--line); }
+  header small { letter-spacing:.14em; text-transform:uppercase; color:var(--mauve); font-weight:600; font-size:11px; }
+  h1 { margin:4px 0 0; font-size:30px; letter-spacing:.02em; color:var(--mauve); text-transform:uppercase; }
+  header p { margin:2px 0 0; color:var(--muted); }
+  .kpis { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border-bottom:1px solid var(--line); }
+  .kpis div { background:var(--paper); padding:12px 0 12px 22px; }
+  .kpis b { display:block; font-size:17px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .kpis span { font-size:12px; color:var(--muted); }
+  .scroll { overflow:auto; flex:1; padding:6px 22px 20px; }
+  h2 { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:16px 0 8px; }
+  #chips, .chiprow { display:flex; flex-wrap:wrap; gap:6px; }
+  #linieText { margin:8px 0 0; padding-left:18px; font-size:13px; color:var(--muted); }
+  .chip { font:inherit; font-size:13px; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:999px;
+    padding:5px 10px; cursor:pointer; }
+  .chip i { font-style:normal; color:var(--muted); margin-left:6px; font-variant-numeric:tabular-nums; }
+  .chip:hover { border-color:var(--mauve); } .chip.on { background:var(--mauve); border-color:var(--mauve); color:#fff; }
+  .chip.on i { color:#f3e2cf; }
+  details { border-top:1px solid var(--line); } details:first-child { margin-top:14px; }
+  summary { cursor:pointer; padding:11px 0; font-weight:600; list-style:none; display:flex; justify-content:space-between; }
+  summary::after { content:"+"; color:var(--mauve); } details[open] summary::after { content:"−"; }
+  summary::-webkit-details-marker { display:none; }
+  dl { margin:0 0 12px; } dl div { display:flex; gap:12px; justify-content:space-between; padding:4px 0; font-size:13.5px; }
+  dt { color:var(--muted); flex:0 0 42%; } dd { margin:0; text-align:right; }
+  #docsLink { display:block; padding:11px 22px; background:var(--mauve); color:#fff; text-decoration:none; font-weight:600; font-size:14px; }
+  #docsLink span { display:block; font-weight:400; font-size:12px; color:#f3e2cf; }
+  #docsLink:hover { background:#5f4434; }
+  .note { font-size:12px; color:var(--muted); margin-top:16px; }
+  .note a { color:var(--mauve); }
+
+  #bar { position:fixed; left:18px; bottom:18px; z-index:2; display:flex; flex-direction:column; gap:8px; align-items:flex-start; }
+  #bar .btns { display:flex; gap:8px; flex-wrap:wrap; }
+  .sunrow { display:flex; align-items:center; gap:10px; background:#fff; border-radius:8px; padding:6px 8px 6px 12px;
+    box-shadow:0 1px 3px rgba(58,42,36,.18); font-size:13px; font-variant-numeric:tabular-nums; }
+  .sunrow input { width:170px; accent-color:var(--mauve); }
+  .sunrow select { font:inherit; font-size:13px; border:1px solid var(--line); border-radius:6px; padding:4px 6px; background:#fff; color:var(--ink); }
+  .sunrow #sunLabel { min-width:190px; }
+  #sunInfo { font-size:12px; color:var(--ink); background:rgba(246,242,236,.85); padding:2px 8px; border-radius:6px; margin-bottom:-4px; order:-1; }
+  .sunrow button { padding:6px 10px !important; box-shadow:none !important; background:var(--paper) !important; font-size:13px !important; }
+  #bar #walk.active { background:var(--ink); color:#fff; }
+  .label.dim { background:var(--ink); color:#fff; font-size:11px; padding:1px 5px; border-radius:3px; cursor:default; font-variant-numeric:tabular-nums; }
+  #hint { position:fixed; left:18px; top:86px; z-index:2; font-size:13px; background:rgba(58,42,36,.82); color:#fff; padding:6px 10px;
+    border-radius:6px; opacity:0; transition:opacity .3s; pointer-events:none; }
+  #hint.show { opacity:1; }
+  #bar button, #toggle { font:inherit; font-size:14px; border:0; border-radius:8px; padding:10px 14px; cursor:pointer;
+    background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(58,42,36,.18); }
+  #bar #play { background:var(--mauve); color:#fff; font-weight:600; }
+  #bar button.off { opacity:.6; }
+  button:focus-visible, summary:focus-visible { outline:2px solid var(--mauve); outline-offset:2px; }
+  #caption { position:fixed; left:18px; top:18px; max-width:min(520px, calc(100vw - 400px)); z-index:2; opacity:0; transition:opacity .4s; }
+  #caption.show { opacity:1; }
+  #caption b { display:block; font-size:24px; line-height:1.15; color:var(--ink); }
+  #caption span { display:block; margin-top:4px; color:var(--muted); }
+  #toggle { display:none; }
+
+  @media (min-width:761px) { #scene, #labels { right:360px; width:calc(100% - 360px); } }
+  @media (max-width:760px) {
+    #panel { top:auto; left:0; width:auto; height:72vh; border-left:0; border-top:1px solid var(--line); border-radius:14px 14px 0 0;
+      transform:translateY(calc(100% - 132px)); transition:transform .3s; }
+    #panel.open { transform:none; }
+    #docsLink { padding:8px 18px; font-size:13px; } #docsLink span { display:none; }
+    header { padding:14px 18px 10px; } h1 { font-size:22px; } .kpis div { padding:8px 18px; } .kpis b { font-size:16px; }
+    .scroll { padding:6px 18px 20px; }
+    #toggle { display:block; position:absolute; right:14px; top:14px; padding:7px 11px; }
+    #bar { left:10px; right:10px; bottom:142px; } #bar button { padding:8px 10px; font-size:13px; }
+    #bar .btns { flex-wrap:nowrap; overflow-x:auto; max-width:100%; } #bar .btns button { white-space:nowrap; }
+    .sunrow { font-size:11.5px; max-width:100%; flex-wrap:wrap; gap:6px; } .sunrow input { width:110px; } .sunrow #sunLabel { min-width:0; }
+    #hint { left:12px; right:12px; top:70px; font-size:12px; }
+    #caption { left:12px; top:12px; max-width:calc(100vw - 24px); } #caption b { font-size:19px; }
+    .label { font-size:10.5px; padding:3px 5px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="3D-Modell der Wohnung B 001"></canvas>
+<div id="labels"></div>
+<div id="caption" aria-live="polite"></div>
+<div id="hint">Ziehen: umsehen · Boden antippen: hingehen · WASD / Pfeiltasten: laufen · Esc: beenden</div>
+<div id="bar">
+  <div class="sunrow">
+    <select id="month" aria-label="Monat"></select>
+    <span id="sunLabel"></span>
+    <input id="sun" type="range" min="4.5" max="22" step="0.05" value="16" aria-label="Tageszeit">
+    <button id="sunPlay">Tagesverlauf</button>
+  </div>
+  <div id="sunInfo"></div>
+  <div class="btns">
+    <button id="play">Tour anhalten</button>
+    <button id="walk">Begehen</button>
+    <button id="building">Wohnung zeigen</button>
+    <button id="dims">Masse</button>
+    <button id="furn">Möblierung</button>
+  </div>
+</div>
+<aside id="panel">
+  <header>
+    <small>URSINIA · Wagerenstrasse 17 · Uster</small>
+    <h1>Wohnung B 001</h1>
+    <p>4.5 Zimmer · Erdgeschoss Haus B · Garten · Neubau</p>
+    <button id="toggle">Details</button>
+  </header>
+  <a id="docsLink" href="./unterlagen.html">Alle Unterlagen, Preise und Pläne<span>Preisliste, Baubeschrieb, 11 Pläne, Galerie, Lage</span></a>
+  <div class="kpis">
+    <div><b>CHF 2'100'000</b><span>Verkaufspreis</span></div>
+    <div><b>141.9 m²</b><span>Bruttowohnfläche</span></div>
+    <div><b>155 m²</b><span>Garten · Loggien 57.2 m²</span></div>
+    <div><b>Offen</b><span>Bezug (Baugesuch Mai 2026)</span></div>
+  </div>
+  <div class="scroll">
+    <h2>Räume</h2>
+    <div id="chips"></div>
+    <h2>Farbstimmung</h2>
+    <div id="linien" class="chiprow"></div>
+    <ul id="linieText"></ul>
+    <div id="groups"></div>
+    <p class="note">Inoffizielle Visualisierung, kein Angebot der Verkäuferin. Geometrie aus dem Grundriss 1:125 abgegriffen,
+      Masse sind gerundete Circa-Werte. A 001 und B 001 haben denselben Grundriss. Raumhöhe (2.50 m), Obergeschoss, Attika, Möblierung und Umgebung sind schematisch,
+      die Farbstimmungen sind eine Interpretation des Farb- und Materialkonzepts (keine offiziellen Ausbaulinien). Sonnenstand berechnet für Uster jeweils am 15. des gewählten Monats,
+      ohne Schatten von Nachbargebäuden, Ausrichtung gemäss Nordpfeil im Plan. Flächen und Preise gemäss Verkaufsunterlagen und Preisliste, Stand November 2026, ohne Gewähr. Offizielle Angaben:
+      <a href="https://www.ursinia-uster.ch/" rel="noopener">ursinia-uster.ch</a></p>
+  </div>
+</aside>
+<script type="module" src="./src/main.js?v=1"></script>
+</body>
+</html>
