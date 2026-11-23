@@ -1,13 +1,13 @@
 # URSINIA, Wagerenstrasse 17, Uster: Wohnung B 001 in 3D
 
-Interaktive 3D-Animation der 4.5-Zimmer-Gartenwohnung B 001 (Haus B, Erdgeschoss) im Neubauprojekt URSINIA, Wagerenstrasse 17, 8610 Uster.
+Interaktive 3D-Animation der beiden 4.5-Zimmer-Gartenwohnungen A 001 (Haus A) und B 001 (Haus B) im Erdgeschoss des Neubauprojekts URSINIA, Wagerenstrasse 17, 8610 Uster. Umschaltbar im Panel oder direkt mit `?w=A`.
 Läuft direkt im Browser, ohne Build-Schritt.
 
 **Live:** https://semmrem1.github.io/ursinia-3d/
 
 ## Inhalt
 
-- Kamerafahrt über beide Häuser, Abheben von Obergeschoss und Attika, alle Räume von B 001
+- Kamerafahrt über beide Häuser, Abheben von Obergeschoss und Attika, beide Gartenwohnungen mit allen Räumen, eigenen Gärten (184 und 155 m²) und Massen
 - Räume anklickbar, mit Flächen gemäss Grundrissplan und Circa-Massen in Metern
 - Begehen-Modus in Augenhöhe (ziehen, antippen, WASD), hinaus auf die Loggien und in den Garten
 - Drei Farbstimmungen (Sand, Salbei, Warmgrau) als Interpretation des Farb- und Materialkonzepts

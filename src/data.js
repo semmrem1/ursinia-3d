@@ -89,14 +89,26 @@ export const attikaFoot = [r(331, 1040, 40, 268), r(47, 1040, 268, 548), r(247, 
 export const HOUSE_W = mx(1052), HOUSE_D = mz(1056);
 export const HOUSE_A_DX = -26.2; // Haus A westlich, gemäss Umgebungsplan
 
-// Gartenanteil B 001: 155 m² (A 001: 184 m²), Umriss aus dem Plan geschätzt
+// Gartenanteile, Umriss aus den Plänen geschätzt (lokale Koordinaten des jeweiligen Hauses)
+// B 001: 155 m², schmaler Westgarten wegen Fussweg zwischen den Häusern. A 001: 184 m², breiter Westgarten.
 const Z1 = HOUSE_D + 0.6;
-export const garden = { area: 155, rects: [
-  { x0: -2.3, x1: 0, z0: mz(253), z1: Z1 },
+const gardenRects = (west, east) => [
+  { x0: -west, x1: 0, z0: mz(253), z1: Z1 },
   { x0: 0, x1: mx(563), z0: HOUSE_D, z1: Z1 },
   { x0: mx(563), x1: HOUSE_W, z0: mz(830), z1: Z1 },
-  { x0: HOUSE_W, x1: HOUSE_W + 3.9, z0: 0.2, z1: Z1 },
-] };
+  { x0: HOUSE_W, x1: HOUSE_W + east, z0: 0.2, z1: Z1 },
+];
+export const garden = { area: 155, rects: gardenRects(2.3, 3.9) };
+
+// Die beiden 4.5-Zimmer-Gartenwohnungen im Erdgeschoss (gleicher Grundriss)
+export const units = {
+  B: { key: 'B', name: 'B 001', haus: 'Haus B', dx: 0, preis: "CHF 2'100'000", preisNum: 2100000, bwf: '141.9 m²', zimmerN: 13.4,
+    garden: { area: 155, rects: gardenRects(2.3, 3.9) }, keller: 'Keller 06 · 11.8 m²', aussen: '212.2 m²',
+    lage: 'Haus B im Osten, Garten vor allem im Osten und Süden' },
+  A: { key: 'A', name: 'A 001', haus: 'Haus A', dx: HOUSE_A_DX, preis: "CHF 2'135'000", preisNum: 2135000, bwf: '141.2 m²', zimmerN: 13.0,
+    garden: { area: 184, rects: gardenRects(5.4, 3.0) }, keller: 'Keller 03 · 12.6 m²', aussen: '241.2 m²',
+    lage: 'Haus A im Westen, breiter Garten auf der Westseite' },
+};
 
 // Möblierung nur zur Veranschaulichung, nach den Plänen (nicht im Kaufpreis)
 const f = (x0, x1, z0, z1, h, color, y = 0) => ({ ...r(x0, x1, z0, z1), h, color, y });

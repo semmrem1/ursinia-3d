@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from './../vendor/OrbitControls.js';
 import {
-  rooms, outline, core, openings, windows, passable, loggias, garden, furniture, beds, desk, diningTable, washTower, kitchen,
-  loggiaTable, ausbaulinien, houseFoot, attikaFoot, HOUSE_W, HOUSE_D, HOUSE_A_DX, facts, WALL_H, r, mx, mz,
-} from './data.js?v=1';
+  rooms, outline, core, openings, windows, passable, loggias, furniture, beds, desk, diningTable, washTower, kitchen,
+  loggiaTable, ausbaulinien, houseFoot, attikaFoot, HOUSE_W, HOUSE_D, HOUSE_A_DX, facts, WALL_H, r, mx, mz, units,
+} from './data.js?v=2';
 
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
@@ -37,7 +37,7 @@ const sc = sun.shadow.camera;
 sc.left = -40; sc.right = 40; sc.top = 40; sc.bottom = -40; sc.near = 1; sc.far = 180;
 sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.02;
 scene.add(sun, sun.target);
-sun.target.position.set(0, 0, 9);
+sun.target.position.set(-4, 0, 9);
 // Nordrichtung gemäss Nordpfeil im Grundriss (ca. 49° im Gegenuhrzeigersinn gegenüber Plan-oben)
 const NORTH = new THREE.Vector3(-0.755, 0, -0.656).normalize();
 const EAST = new THREE.Vector3(0.656, 0, -0.755).normalize();
@@ -186,19 +186,23 @@ scene.add(apartment);
 const site = new THREE.Group();
 scene.add(site);
 
+// Aktuell gewählte Wohnung (B 001 gemäss Inserat oder A 001)
+let unit = units.B;
+const areaOf = (room, u = unit) => (room.id === 'zimmerN' ? u.zimmerN : room.area);
 const gardenMat = mat(0x86a873);
-for (const q of garden.rects) apartment.add(floor(q, gardenMat, 1, 1, 0.01));
+const hedgeMat = mat(0x56744f);
+// Gartenanteil mit Wildhecke, pro Wohnung im Koordinatensystem des jeweiligen Hauses
+for (const u of Object.values(units)) {
+  const yard = new THREE.Group(); yard.position.x = u.dx; scene.add(yard);
+  for (const q of u.garden.rects) yard.add(floor(q, gardenMat, 1, 1, 0.01));
+  const [gw, gs, , ge] = u.garden.rects;
+  yard.add(box({ x0: gw.x0 - 0.35, x1: gw.x0, z0: gw.z0, z1: gw.z1 + 0.35 }, 0, 1.1, hedgeMat));
+  yard.add(box({ x0: gw.x0 - 0.35, x1: ge.x1 + 0.35, z0: gs.z1, z1: gs.z1 + 0.35 }, 0, 1.1, hedgeMat));
+  yard.add(box({ x0: ge.x1, x1: ge.x1 + 0.35, z0: ge.z0, z1: ge.z1 }, 0, 1.1, hedgeMat));
+}
 // Aussenbelag Loggien: Feinsteinzeug 60 x 60, Steinoptik Sandbeige
 const loggiaMat = mat(0xd5c8b0, { map: tileTex, roughness: 0.8 });
 for (const lg of loggias) for (const q of lg.rects) apartment.add(floor(q, loggiaMat, 0.6, 0.6, 0.05));
-// Wildhecke am Rand des Gartens
-const hedgeMat = mat(0x56744f);
-{
-  const [gw, gs, , ge] = garden.rects;
-  apartment.add(box({ x0: gw.x0 - 0.35, x1: gw.x0, z0: gw.z0, z1: gw.z1 + 0.35 }, 0, 1.1, hedgeMat));
-  apartment.add(box({ x0: gw.x0 - 0.35, x1: ge.x1 + 0.35, z0: gs.z1, z1: gs.z1 + 0.35 }, 0, 1.1, hedgeMat));
-  apartment.add(box({ x0: ge.x1, x1: ge.x1 + 0.35, z0: ge.z0, z1: ge.z1 }, 0, 1.1, hedgeMat));
-}
 const tree = (x, z, s = 1, color = 0x6f9163) => {
   const g = new THREE.Group();
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09 * s, 0.13 * s, 1.6 * s, 8), mat(0x6e5a48));
@@ -209,7 +213,7 @@ const tree = (x, z, s = 1, color = 0x6f9163) => {
   g.add(trunk, crown); g.position.set(x, 0, z); return g;
 };
 [[22.8, 1.5, 1.2], [23.2, 7.5, 0.9], [23.0, 13.5, 1.1], [21.5, 21.5, 1.4], [-3.2, 1.5, 1.0], [-2.8, 22.5, 0.9],
-  [-9.5, -4.5, 1.6], [-14, -4.8, 1.3], [3, -6.5, 1.2], [9, -6.8, 1.5], [15, -6.6, 1.2], [-30, 2, 1.7], [-31, 12, 1.2], [-29, 22, 1.0]]
+  [-9.5, -4.5, 1.6], [-14, -4.8, 1.3], [3, -6.5, 1.2], [9, -6.8, 1.5], [15, -6.6, 1.2], [-30, 2, 1.7], [-34, 12, 1.2], [-29, 22, 1.0]]
   .forEach(([x, z, s], i) => site.add(tree(x, z, s, [0x6f9163, 0x7d9a6b, 0x8a9f74][i % 3])));
 // Fussweg im Norden, Velounterstand, Zufahrt Tiefgarage, Pergola und Spielwiese im Süden
 const path = mat(0xd8d3c8);
@@ -321,6 +325,7 @@ const coreMat = mat(0xcfc9c0, { transparent: true, opacity: 1 });
 const rest = new THREE.Group();
 for (const q of core) rest.add(box(q, 0, WALL_H, coreMat));
 scene.add(rest);
+const restA = rest.clone(); restA.position.x = HOUSE_A_DX; scene.add(restA);
 
 // Loggien: Stützen an den Ecken und Pflanztröge
 {
@@ -337,6 +342,7 @@ scene.add(rest);
 // ---------- Küche, Bäder, Möbel ----------
 const furn = new THREE.Group();      // lose Möblierung (ausblendbar)
 const fitout = new THREE.Group();    // Küche und Nasszellen gemäss Farbstimmung
+furn.name = 'furn';
 apartment.add(furn, fitout);
 const white = mat(0xfafafa, { roughness: 0.2 });
 const steel = mat(0xb8bcc0, { roughness: 0.3, metalness: 0.7 });
@@ -494,8 +500,7 @@ const um = (color, o = {}) => { const m = mat(color, { transparent: true, ...o }
 const rTex = renderTex.clone(); rTex.repeat.set(6, 2);
 const facadeB = um(FACADE, { map: rTex }), slabB = um(0xe7e3db), winB = um(0x22292c, { roughness: 0.15 }), railB = um(0xa8c4cc, { opacity: 0.35, roughness: 0.05 });
 const roofB = um(0x9aa58a), parapetB = um(0xdedad2);
-const facadeA = mat(FACADE, { map: rTex }), slabA = mat(0xe7e3db), winA = mat(0x22292c, { roughness: 0.15 }), railA = mat(0xa8c4cc, { transparent: true, opacity: 0.35 });
-const roofA = mat(0x9aa58a), parapetA = mat(0xdedad2), pvMat = mat(0x10203c, { roughness: 0.2, metalness: 0.4 });
+const pvMat = mat(0x10203c, { roughness: 0.2, metalness: 0.4 });
 const SLAB = 0.3, STOREY = 2.8, Y_OG = WALL_H + SLAB, Y_AT = Y_OG + STOREY, Y_ROOF = Y_AT + STOREY;
 // Rücksprünge der Loggien im Obergeschoss (vereinfacht)
 const ogCut = [{ x0: mx(250), x1: mx(563), z0: mz(920), z1: HOUSE_D }, { x0: mx(843), x1: HOUSE_W, z0: mz(620), z1: mz(833) }];
@@ -580,9 +585,21 @@ function building(target, dx, mats, withEG, withPV) {
 }
 building(upper, 0, [facadeB, slabB, winB, railB, roofB, parapetB], false, false);
 scene.add(upper);
-const houseA = new THREE.Group();
-building(houseA, HOUSE_A_DX, [facadeA, slabA, winA, railA, roofA, parapetA], true, true);
-scene.add(houseA);
+// Haus A: Obergeschoss, Attika und Dach ebenfalls abhebbar, darunter die Wohnung A 001
+const upperA = new THREE.Group();
+building(upperA, HOUSE_A_DX, [facadeB, slabB, winB, railB, roofB, parapetB], false, true);
+scene.add(upperA);
+// Wohnung A 001: gleicher Grundriss wie B 001, als Kopie in Haus A
+const apartmentA = apartment.clone();
+apartmentA.position.x = HOUSE_A_DX;
+scene.add(apartmentA);
+{
+  const orig = [], copy = [];
+  apartment.traverse((o) => orig.push(o)); apartmentA.traverse((o) => copy.push(o));
+  const targets = new Set(floorTargets);
+  orig.forEach((o, i) => { if (targets.has(o)) floorTargets.push(copy[i]); });
+}
+const furnA = apartmentA.getObjectByName('furn');
 
 // ---------- Nordpfeil ----------
 {
@@ -603,39 +620,51 @@ const addLabel = (pos, html, cls = '') => {
   const l = { pos, el, group: cls.split(' ').pop() }; labels.push(l); return l;
 };
 const centers = {};
-for (const room of rooms) {
-  centers[room.id] = center(room);
-  const l = addLabel(centers[room.id].clone().setY(0.3), `<b>${room.name}</b><span>${room.area.toFixed(1)} m²</span>`, 'room');
-  l.id = room.id;
-  l.el.addEventListener('click', () => focusRoom(room.id));
+for (const room of rooms) centers[room.id] = center(room);
+// Pro Wohnung eigene Beschriftungen (nur die der gewählten Wohnung sind sichtbar)
+const roomLabels = [];
+for (const u of Object.values(units)) {
+  const at = (x, y, z) => new THREE.Vector3(x + u.dx, y, z);
+  for (const room of rooms) {
+    const c = centers[room.id];
+    const l = addLabel(at(c.x, 0.3, c.z), `<b>${room.name}</b><span>${areaOf(room, u).toFixed(1)} m²</span>`, 'room');
+    l.id = room.id; l.unit = u.key; roomLabels.push(l);
+    l.el.addEventListener('click', () => focusRoom(room.id));
+  }
+  for (const [x, z, html] of [[mx(140), mz(800), '<b>Loggia</b><span>41.5 m²</span>'], [mx(945), mz(700), '<b>Loggia Ost</b><span>15.7 m²</span>'],
+    [14, 16.8, `<b>Garten</b><span>${u.garden.area} m²</span>`]]) addLabel(at(x, 0.2, z), html, 'out room').unit = u.key;
+  addLabel(at(mx(540), WALL_H, mz(350)), '<b>Treppenhaus · Lift</b>', 'out room').unit = u.key;
+  // Wohnungsname über dem Grundriss: bei der anderen Wohnung anklickbar zum Wechseln
+  const t = addLabel(at(9, 3.2, 9), `<b>Wohnung ${u.name}</b><span>${u.preis} · Garten ${u.garden.area} m²</span>`, 'unitlbl');
+  t.unitOf = u.key; t.el.addEventListener('click', () => setUnit(u.key));
 }
-addLabel(new THREE.Vector3(mx(140), 0.2, mz(800)), '<b>Loggia</b><span>41.5 m²</span>', 'out room');
-addLabel(new THREE.Vector3(mx(945), 0.2, mz(700)), '<b>Loggia Ost</b><span>15.7 m²</span>', 'out room');
-addLabel(new THREE.Vector3(14, 0.2, 16.8), `<b>Garten</b><span>${garden.area} m²</span>`, 'out room');
-addLabel(new THREE.Vector3(mx(540), WALL_H, mz(350)), '<b>Treppenhaus · Lift</b>', 'out room');
 addLabel(new THREE.Vector3(-5, 1.2, -1), '<b>N</b>', 'north');
-addLabel(new THREE.Vector3(HOUSE_A_DX + 9, Y_ROOF + 1.6, 8), "<b>Haus A</b><span>PV auf dem Dach · A 001 CHF 2'135'000</span>", 'building');
+addLabel(new THREE.Vector3(HOUSE_A_DX + 9, Y_ROOF + 1.6, 8), "<b>Haus A</b><span>PV auf dem Dach · Wohnung A 001 im Erdgeschoss</span>", 'building');
 addLabel(new THREE.Vector3(9, Y_ROOF + 1.6, 8), '<b>Haus B</b><span>Wohnung B 001 im Erdgeschoss</span>', 'building');
 addLabel(new THREE.Vector3(-6, 0.3, 23.5), '<b>Zufahrt Tiefgarage</b>', 'building');
 addLabel(new THREE.Vector3(-15, 3, 23), '<b>Pergola</b>', 'building');
 addLabel(new THREE.Vector3(10, 0.3, 23), '<b>Spielwiese</b>', 'building');
 addLabel(new THREE.Vector3(3, 2.6, -6.3), '<b>Velounterstand</b>', 'building');
 
-// Masslinien: dünner Strich am Boden mit Endmarken, Wert aus dem Modell (gerundet, ca.)
-const dims = new THREE.Group(); apartment.add(dims);
+// Masslinien: dünner Strich am Boden mit Endmarken, Wert aus dem Modell (gerundet, ca.), pro Wohnung
+const dims = new THREE.Group(); scene.add(dims);
+const dimGroups = {};
 const dimMat = new THREE.MeshBasicMaterial({ color: 0x2e2629 });
+let dimUnit = units.B;
 function dim(x0, z0, x1, z1, y = 0.035) {
   const alongX = Math.abs(x1 - x0) > Math.abs(z1 - z0), L = alongX ? Math.abs(x1 - x0) : Math.abs(z1 - z0), t = 0.035, k = 0.14;
   const line = alongX ? { x0, x1, z0: z0 - t / 2, z1: z0 + t / 2 } : { x0: x0 - t / 2, x1: x0 + t / 2, z0, z1 };
-  const mk = (q) => { const m = box(q, y, y + 0.012, dimMat); m.castShadow = m.receiveShadow = false; dims.add(m); };
+  const mk = (q) => { const m = box(q, y, y + 0.012, dimMat); m.castShadow = m.receiveShadow = false; dimGroups[dimUnit.key].add(m); };
   mk(line);
   for (const e of [0, 1]) {
     const a = e ? (alongX ? x1 : z1) : (alongX ? x0 : z0);
     mk(alongX ? { x0: a - t / 2, x1: a + t / 2, z0: z0 - k, z1: z0 + k } : { x0: x0 - k, x1: x0 + k, z0: a - t / 2, z1: a + t / 2 });
   }
-  addLabel(new THREE.Vector3((x0 + x1) / 2, y + 0.05, (z0 + z1) / 2), `${L.toFixed(1)} m`, 'dim');
+  addLabel(new THREE.Vector3((x0 + x1) / 2 + dimUnit.dx, y + 0.05, (z0 + z1) / 2), `${L.toFixed(1)} m`, 'dim').unit = dimUnit.key;
 }
-{
+for (const u of Object.values(units)) {
+  dimUnit = u;
+  const g = new THREE.Group(); g.position.x = u.dx; dims.add(g); dimGroups[u.key] = g;
   const R = Object.fromEntries(rooms.map((q) => [q.id, q.rects[0]]));
   const both = (q, ox = 0.45, oz = 0.45) => { dim(q.x0, q.z1 - oz, q.x1, q.z1 - oz); dim(q.x0 + ox, q.z0, q.x0 + ox, q.z1); };
   both(R.zimmerW, 0.45, 0.6); both(R.zimmerN, 0.4, 0.75); both(R.zimmerO, 0.4, 0.75); both(R.wohnen, 0.3, 0.3);
@@ -647,7 +676,7 @@ function dim(x0, z0, x1, z1, y = 0.035) {
   const [lw, ls] = loggias[0].rects, le = loggias[1].rects[0];
   dim(lw.x0, mz(1000), lw.x1, mz(1000)); dim(lw.x0 + 0.25, lw.z0, lw.x0 + 0.25, lw.z1); dim(ls.x0, ls.z1 - 0.25, ls.x1, ls.z1 - 0.25);
   dim(le.x0, le.z0 + 0.3, le.x1, le.z0 + 0.3); dim(le.x1 - 0.3, le.z0, le.x1 - 0.3, le.z1);
-  const [gw, gs, gso, ge] = garden.rects;
+  const [gw, gs, gso, ge] = u.garden.rects;
   dim(gw.x0, 6, gw.x1, 6); dim(ge.x0, 6, ge.x1, 6); dim(16, gso.z0, 16, gso.z1); dim(gs.x0 + 2, gs.z0, gs.x0 + 2, gs.z1);
 }
 let dimsOn = true;
@@ -656,15 +685,17 @@ const v = new THREE.Vector3();
 function updateLabels() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   for (const l of labels) {
-    v.copy(l.pos); if (l.group === 'building' && l.pos.y > 5 && l.pos.x > -5) v.y += ease(lift) * 26;
+    v.copy(l.pos); if (l.group === 'building' && l.pos.y > 5) v.y += ease(lift) * 26;
     const dist = v.distanceTo(camera.position);
     v.project(camera);
     const vis = v.z < 1 && v.z > -1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
     let show = l.group === 'building' ? 1 - lift : l.group === 'north' ? (walking ? 0 : 1) : lift;
     if ((l.group === 'room' || l.group === 'building') && walking) show = 0;
     if (l.group === 'dim') show = dimsOn && dist < (walking ? 4.2 : 45) ? lift : 0;
+    if (l.unit && l.unit !== unit.key) show = 0;
+    if (l.group === 'unitlbl') show = walking || l.unitOf === unit.key ? 0 : lift;
     l.el.style.opacity = vis ? show : 0;
-    l.el.style.pointerEvents = vis && show > 0.6 && l.id ? 'auto' : 'none';
+    l.el.style.pointerEvents = vis && show > 0.6 && (l.id || l.unitOf) ? 'auto' : 'none';
     l.el.style.transform = `translate(-50%,-50%) translate(${(v.x * 0.5 + 0.5) * w}px,${(-v.y * 0.5 + 0.5) * h}px)`;
     l.el.classList.toggle('active', !!l.id && l.id === activeRoom);
   }
@@ -694,9 +725,11 @@ function fly(pos, target, ms, tk) {
     step();
   });
 }
-const AC = [9.0, 0, 9.2];
+const AC = () => [9.0 + unit.dx, 0, 9.2];
+const overView = () => [-6 + unit.dx, 22, 28];
+const roomCenter = (id) => centers[id].clone().setX(centers[id].x + unit.dx);
 const roomView = (id) => {
-  const c = centers[id], narrow = innerWidth < 760;
+  const c = roomCenter(id), narrow = innerWidth < 760;
   return [[c.x - 3.6, narrow ? 21 : 11.5, c.z + (narrow ? 11 : 8.2)], [c.x, 0.4, c.z]];
 };
 const caption = document.getElementById('caption');
@@ -709,12 +742,13 @@ function setActive(id) {
   for (const [k, m] of Object.entries(roomFloors)) { m.emissive.setHex(k === id ? 0x7a5a46 : 0x000000); m.emissiveIntensity = 0.22; }
   document.querySelectorAll('.chip[data-id]').forEach((c) => c.classList.toggle('on', c.dataset.id === id));
 }
+const roomNote = (room) => (room.id === 'zimmerN' ? `Elternzimmer mit Einbauschrank, Bad nebenan (${unit.key === 'B' ? 'A 001: 13.0 m²' : 'B 001: 13.4 m²'})` : room.note);
 async function focusRoom(id) {
   if (walking) { standIn(id); return; }
   stop();
   const tk = token; liftTarget = 1; setActive(id);
   const room = rooms.find((q) => q.id === id);
-  setCaption(`${room.name} · ${room.area.toFixed(1)} m²`, room.note);
+  setCaption(`${room.name} · ${areaOf(room).toFixed(1)} m²`, roomNote(room));
   const [p, t] = roomView(id);
   await fly(p, t, 1400, tk);
 }
@@ -723,34 +757,57 @@ function stop() { token++; playing = false; playBtn.textContent = 'Tour starten'
 async function tour() {
   if (walking) setWalk(false);
   token++; const tk = token; playing = true; playBtn.textContent = 'Tour anhalten';
-  const far = innerWidth < 760 ? 1.45 : 1;
+  const far = innerWidth < 760 ? 1.45 : 1, dx = unit.dx;
   setActive(null); liftTarget = 0;
   setCaption('URSINIA, Wagerenstrasse 17, Uster', 'Zwei Mehrfamilienhäuser mit acht Eigentumswohnungen');
   if (!await fly([-40 * far, 24 * far, 58 * far], [-4, 3, 9], 1800, tk)) return;
   if (!await fly([-8 * far, 22 * far, 62 * far], [-4, 3, 9], 6000, tk)) return;
-  setCaption('Haus B', 'Erdgeschoss 4.5-Zimmer-Gartenwohnung, darüber zwei 3.5-Zimmer-Wohnungen und die Attika');
-  if (!await fly([30 * far, 20 * far, 34 * far], [9, 4, 9], 4000, tk)) return;
-  if (!await sleep(1400, tk)) return;
-  setCaption('Wohnung B 001 im Erdgeschoss', '4.5 Zimmer, 141.9 m² BWF, Loggien 41.5 und 15.7 m²');
+  setCaption('Zwei Gartenwohnungen im Erdgeschoss', "A 001 in Haus A (CHF 2'135'000, Garten 184 m²) und B 001 in Haus B (CHF 2'100'000, Garten 155 m²), gleicher Grundriss");
   liftTarget = 1;
-  if (!await fly([-6 * far, 24 * far, 30 * far], AC, 3600, tk)) return;
+  if (!await fly([-4, 46 * far, 30 * far], [-4, 0, 9], 4200, tk)) return;
+  if (!await sleep(2600, tk)) return;
+  setCaption(`Wohnung ${unit.name} im Erdgeschoss von ${unit.haus}`, `4.5 Zimmer, ${unit.bwf} BWF, Loggien 41.5 und 15.7 m², Garten ${unit.garden.area} m²`);
+  if (!await fly(overView(), AC(), 3000, tk)) return;
   if (!await sleep(900, tk)) return;
-  if (!await fly([AC[0], 30 * far, AC[2] + 0.01], AC, 2600, tk)) return;
+  if (!await fly([AC()[0], 30 * far, AC()[2] + 0.01], AC(), 2600, tk)) return;
   if (!await sleep(1800, tk)) return;
   for (const room of rooms) {
     setActive(room.id);
-    setCaption(`${room.name} · ${room.area.toFixed(1)} m²`, room.note);
+    setCaption(`${room.name} · ${areaOf(room).toFixed(1)} m²`, roomNote(room));
     const [p, t] = roomView(room.id);
     if (!await fly(p, t, 1900, tk)) return;
     if (!await sleep(1700, tk)) return;
   }
   setActive(null);
-  setCaption('Loggia 41.5 m² und Garten 155 m²', 'Grosse Loggia über Eck vor Kochen und Essen, Garten auf drei Seiten');
-  if (!await fly([-12 * far, 9 * far, 26 * far], [4, 0, 14], 2800, tk)) return;
+  setCaption(`Loggia 41.5 m² und Garten ${unit.garden.area} m²`, `Grosse Loggia über Eck vor Kochen und Essen. ${unit.lage}`);
+  if (!await fly([-12 * far + dx, 9 * far, 26 * far], [4 + dx, 0, 14], 2800, tk)) return;
   if (!await sleep(2600, tk)) return;
-  setCaption("CHF 2'100'000", 'Frei zoomen oder mit «Begehen» durch die Wohnung laufen');
-  if (!await fly([-6 * far, 22 * far, 28 * far], AC, 2600, tk)) return;
+  setCaption(unit.preis, 'Oben rechts zwischen A 001 und B 001 wechseln, frei zoomen oder mit «Begehen» durch die Wohnung laufen');
+  if (!await fly(overView(), AC(), 2600, tk)) return;
   playing = false; playBtn.textContent = 'Tour nochmals';
+}
+
+// ---------- Wohnung wechseln ----------
+function setUnit(key) {
+  const changed = unit.key !== key;
+  unit = units[key];
+  document.querySelectorAll('.chip.unit').forEach((b) => b.classList.toggle('on', b.dataset.u === key));
+  document.getElementById('unitTitle').textContent = `Wohnung ${unit.name}`;
+  document.getElementById('unitSub').textContent = `4.5 Zimmer · Erdgeschoss ${unit.haus} · Garten · Neubau`;
+  document.getElementById('kPreis').textContent = unit.preis;
+  document.getElementById('kBwf').textContent = unit.bwf;
+  document.getElementById('kGarten').textContent = `${unit.garden.area} m²`;
+  document.title = `Wohnung ${unit.name} · URSINIA, Wagerenstrasse 17, Uster · 3D`;
+  document.querySelectorAll('.chip[data-id]').forEach((c) => {
+    const room = rooms.find((q) => q.id === c.dataset.id);
+    c.innerHTML = `${room.name}<i>${areaOf(room).toFixed(1)}</i>`;
+  });
+  for (const [k, g] of Object.entries(dimGroups)) g.visible = k === key;
+  if (!changed) return;
+  if (walking) { standIn('wohnen'); caption.dataset.w = ''; return; }
+  stop(); liftTarget = 1; setActive(null);
+  setCaption(`Wohnung ${unit.name} im Erdgeschoss von ${unit.haus}`, `${unit.preis} · ${unit.bwf} BWF · Garten ${unit.garden.area} m² · ${unit.keller}`);
+  fly(overView(), AC(), 1600, token);
 }
 
 // ---------- Begehen (Ich-Perspektive) ----------
@@ -758,7 +815,7 @@ const EYE = 1.62;
 const LOOK = { wohnen: [-1, 0.35], kochen: [0.2, 1], essen: [-1, 0.6], zimmerW: [-1, -0.2], zimmerN: [0.2, -1], zimmerO: [0.6, 1],
   entree: [0.3, 1], korridor: [0, 1], bad: [-1, 0], dusche: [-1, 0.2], reduit: [-1, 0], wmtu: [0, -1] };
 function standIn(id) {
-  const c = centers[id], q = rooms.find((x) => x.id === id).rects[0], [dx, dz] = LOOK[id], n = Math.hypot(dx, dz);
+  const c = roomCenter(id), q = rooms.find((x) => x.id === id).rects[0], [dx, dz] = LOOK[id], n = Math.hypot(dx, dz);
   let k = 0.32;
   for (; k > 0; k -= 0.08) {
     const x = c.x - dx / n * (q.x1 - q.x0) * k, z = c.z - dz / n * (q.z1 - q.z0) * k;
@@ -769,10 +826,12 @@ function standIn(id) {
 }
 let yaw = 0, pitch = 0, walkTarget = null, teleport = false;
 const keys = new Set();
-const allowedOutside = [...loggias.flatMap((l) => l.rects), ...garden.rects];
-function blockedPoint(x, z) {
+const loggiaRects = loggias.flatMap((l) => l.rects);
+// Weltkoordinaten -> Koordinaten der gewählten Wohnung
+function blockedPoint(wx, z) {
+  const x = wx - unit.dx;
   if (inAny(x, z, outline)) { const t = typeAt(x, z); return t === 1 || t === 3 || (t === 2 && !inAny(x, z, passable)); }
-  return !inAny(x, z, allowedOutside);
+  return !inAny(x, z, loggiaRects) && !inAny(x, z, unit.garden.rects);
 }
 function blocked(x, z) {
   const rr = 0.22;
@@ -795,17 +854,18 @@ function setWalk(on) {
     caption.dataset.w = '';
   } else {
     camera.fov = 42; camera.updateProjectionMatrix(); walkTarget = null;
-    camera.position.set(-6, 22, 28); controls.target.set(...AC);
-    setCaption('Wohnung B 001 im Erdgeschoss', '');
+    camera.position.set(...overView()); controls.target.set(...AC());
+    setCaption(`Wohnung ${unit.name} im Erdgeschoss`, '');
   }
   hint.classList.toggle('show', on);
 }
-function placeName(x, z) {
+function placeName(wx, z) {
+  const x = wx - unit.dx;
   const here = rooms.find((q) => inAny(x, z, q.rects));
-  if (here) return [`${here.name} · ${here.area.toFixed(1)} m²`, here.note];
+  if (here) return [`${here.name} · ${areaOf(here).toFixed(1)} m²`, roomNote(here)];
   const lg = loggias.find((l) => inAny(x, z, l.rects));
   if (lg) return [`${lg.name} · ${lg.area.toFixed(1)} m²`, 'Feinsteinzeug 60 x 60, elektrische Senkrechtmarkisen'];
-  return [`Garten · ${garden.area} m²`, 'Gartenanteil mit Wildhecke'];
+  return [`Garten ${unit.name} · ${unit.garden.area} m²`, 'Gartenanteil mit Wildhecke'];
 }
 let down = null;
 const ray = new THREE.Raycaster();
@@ -872,7 +932,7 @@ walkBtn.addEventListener('click', () => setWalk(!walking));
 const bldBtn = document.getElementById('building');
 bldBtn.addEventListener('click', () => { if (walking) setWalk(false); stop(); liftTarget = liftTarget > 0.5 ? 0 : 1; });
 const furnBtn = document.getElementById('furn');
-furnBtn.addEventListener('click', () => { furn.visible = !furn.visible; furnBtn.classList.toggle('off', !furn.visible); });
+furnBtn.addEventListener('click', () => { furn.visible = !furn.visible; if (furnA) furnA.visible = furn.visible; furnBtn.classList.toggle('off', !furn.visible); });
 const dimBtn = document.getElementById('dims');
 dimBtn.addEventListener('click', () => { dimsOn = !dimsOn; dims.visible = dimsOn; dimBtn.classList.toggle('off', !dimsOn); });
 const sunInfo = document.getElementById('sunInfo'), monthSel = document.getElementById('month');
@@ -911,14 +971,16 @@ function resize() {
 addEventListener('resize', resize);
 resize();
 applyLinie(0);
+document.querySelectorAll('.chip.unit').forEach((b) => b.addEventListener('click', () => setUnit(b.dataset.u)));
+setUnit(new URLSearchParams(location.search).get('w') === 'A' ? 'A' : 'B');
 applySun();
 
 const clock = new THREE.Clock();
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05);
   lift += (liftTarget - lift) * Math.min(1, dt * 2.2);
-  upper.position.y = ease(lift) * 26;
-  upper.visible = lift < 0.58;
+  upper.position.y = upperA.position.y = ease(lift) * 26;
+  upper.visible = upperA.visible = lift < 0.58;
   for (const m of upperMats) {
     const o = Math.max(0, 1 - lift * 1.7);
     m.opacity = m === railB ? 0.35 * o : o;
@@ -936,10 +998,10 @@ function frame() {
 
 camera.position.set(-40, 24, 58); controls.target.set(-4, 3, 9);
 frame();
-window.__app = { setWalk, stop, camera, controls, setSun(h, m) { if (m !== undefined) { setMonth(m); monthSel.value = m; } sunHour = h; sunInput.value = h; applySun(); }, setLift(x) { liftTarget = x; } };
+window.__app = { setWalk, stop, camera, controls, setUnit, setSun(h, m) { if (m !== undefined) { setMonth(m); monthSel.value = m; } sunHour = h; sunInput.value = h; applySun(); }, setLift(x) { liftTarget = x; } };
 if (matchMedia('(prefers-reduced-motion: reduce)').matches || location.hash === '#still') {
-  liftTarget = 1; camera.position.set(-6, 22, 28); controls.target.set(...AC);
-  setCaption('Wohnung B 001 im Erdgeschoss', 'Tour mit dem Knopf starten');
+  liftTarget = 1; camera.position.set(...overView()); controls.target.set(...AC());
+  setCaption(`Wohnung ${unit.name} im Erdgeschoss`, 'Tour mit dem Knopf starten');
   playBtn.textContent = 'Tour starten';
 } else {
   tour();

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wohnung B 001 · URSINIA, Wagerenstrasse 17, Uster · 3D</title>
-<meta name="description" content="3D-Animation der 4.5-Zimmer-Gartenwohnung B 001 im Neubauprojekt URSINIA, Wagerenstrasse 17, Uster. Inoffizielle Visualisierung.">
+<meta name="description" content="3D-Animation der beiden 4.5-Zimmer-Gartenwohnungen A 001 und B 001 im Neubauprojekt URSINIA, Wagerenstrasse 17, Uster. Inoffizielle Visualisierung.">
 <link rel="icon" href="data:,">
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
 <style>
@@ -64,6 +64,8 @@
   #sunInfo { font-size:12px; color:var(--ink); background:rgba(246,242,236,.85); padding:2px 8px; border-radius:6px; margin-bottom:-4px; order:-1; }
   .sunrow button { padding:6px 10px !important; box-shadow:none !important; background:var(--paper) !important; font-size:13px !important; }
   #bar #walk.active { background:var(--ink); color:#fff; }
+  .unitrow { display:flex; gap:6px; margin-top:10px; }
+  .label.unitlbl { background:var(--mauve); color:#fff; font-size:13px; padding:6px 10px; cursor:pointer; } .label.unitlbl span { color:#f3e2cf; }
   .label.dim { background:var(--ink); color:#fff; font-size:11px; padding:1px 5px; border-radius:3px; cursor:default; font-variant-numeric:tabular-nums; }
   #hint { position:fixed; left:18px; top:86px; z-index:2; font-size:13px; background:rgba(58,42,36,.82); color:#fff; padding:6px 10px;
     border-radius:6px; opacity:0; transition:opacity .3s; pointer-events:none; }
@@ -82,13 +84,13 @@
   @media (min-width:761px) { #scene, #labels { right:360px; width:calc(100% - 360px); } }
   @media (max-width:760px) {
     #panel { top:auto; left:0; width:auto; height:72vh; border-left:0; border-top:1px solid var(--line); border-radius:14px 14px 0 0;
-      transform:translateY(calc(100% - 132px)); transition:transform .3s; }
+      transform:translateY(calc(100% - 170px)); transition:transform .3s; }
     #panel.open { transform:none; }
     #docsLink { padding:8px 18px; font-size:13px; } #docsLink span { display:none; }
     header { padding:14px 18px 10px; } h1 { font-size:22px; } .kpis div { padding:8px 18px; } .kpis b { font-size:16px; }
     .scroll { padding:6px 18px 20px; }
     #toggle { display:block; position:absolute; right:14px; top:14px; padding:7px 11px; }
-    #bar { left:10px; right:10px; bottom:142px; } #bar button { padding:8px 10px; font-size:13px; }
+    #bar { left:10px; right:10px; bottom:180px; } #bar button { padding:8px 10px; font-size:13px; }
     #bar .btns { flex-wrap:nowrap; overflow-x:auto; max-width:100%; } #bar .btns button { white-space:nowrap; }
     .sunrow { font-size:11.5px; max-width:100%; flex-wrap:wrap; gap:6px; } .sunrow input { width:110px; } .sunrow #sunLabel { min-width:0; }
     #hint { left:12px; right:12px; top:70px; font-size:12px; }
@@ -121,15 +123,16 @@
 <aside id="panel">
   <header>
     <small>URSINIA · Wagerenstrasse 17 · Uster</small>
-    <h1>Wohnung B 001</h1>
-    <p>4.5 Zimmer · Erdgeschoss Haus B · Garten · Neubau</p>
+    <h1 id="unitTitle">Wohnung B 001</h1>
+    <p id="unitSub">4.5 Zimmer · Erdgeschoss Haus B · Garten · Neubau</p>
+    <div class="unitrow"><button class="chip unit on" data-u="B">B 001 · Haus B</button><button class="chip unit" data-u="A">A 001 · Haus A</button></div>
     <button id="toggle">Details</button>
   </header>
   <a id="docsLink" href="./unterlagen.html">Alle Unterlagen, Preise und Pläne<span>Preisliste, Baubeschrieb, 11 Pläne, Galerie, Lage</span></a>
   <div class="kpis">
-    <div><b>CHF 2'100'000</b><span>Verkaufspreis</span></div>
-    <div><b>141.9 m²</b><span>Bruttowohnfläche</span></div>
-    <div><b>155 m²</b><span>Garten · Loggien 57.2 m²</span></div>
+    <div><b id="kPreis">CHF 2'100'000</b><span>Verkaufspreis</span></div>
+    <div><b id="kBwf">141.9 m²</b><span>Bruttowohnfläche</span></div>
+    <div><b id="kGarten">155 m²</b><span>Garten · Loggien 57.2 m²</span></div>
     <div><b>Offen</b><span>Bezug (Baugesuch Mai 2026)</span></div>
   </div>
   <div class="scroll">
@@ -140,12 +143,12 @@
     <ul id="linieText"></ul>
     <div id="groups"></div>
     <p class="note">Inoffizielle Visualisierung, kein Angebot der Verkäuferin. Geometrie aus dem Grundriss 1:125 abgegriffen,
-      Masse sind gerundete Circa-Werte. A 001 und B 001 haben denselben Grundriss. Raumhöhe (2.50 m), Obergeschoss, Attika, Möblierung und Umgebung sind schematisch,
+      Masse sind gerundete Circa-Werte. A 001 und B 001 haben denselben Grundriss, die Gartenumrisse sind aus den Plänen geschätzt. Raumhöhe (2.50 m), Obergeschoss, Attika, Möblierung und Umgebung sind schematisch,
       die Farbstimmungen sind eine Interpretation des Farb- und Materialkonzepts (keine offiziellen Ausbaulinien). Sonnenstand berechnet für Uster jeweils am 15. des gewählten Monats,
       ohne Schatten von Nachbargebäuden, Ausrichtung gemäss Nordpfeil im Plan. Flächen und Preise gemäss Verkaufsunterlagen und Preisliste, Stand November 2026, ohne Gewähr. Offizielle Angaben:
       <a href="https://www.ursinia-uster.ch/" rel="noopener">ursinia-uster.ch</a></p>
   </div>
 </aside>
-<script type="module" src="./src/main.js?v=1"></script>
+<script type="module" src="./src/main.js?v=2"></script>
 </body>
 </html>
