@@ -213,6 +213,8 @@ export const facts = {
       ['Inhalt', 'Abbruch Bestandesbau, Neubau 2 MFH mit Tiefgarage'],
       ['Baubewilligung', 'nicht publiziert gefunden'],
       ['Baustart / Bezug', 'nicht angegeben (Schätzung 2027 / Ende 2028)'],
+      ['Verkaufsstatus', 'alle 8 Wohnungen frei (23.11.2026)'],
+      ['Vermarktung', 'Website seit Ende Juli 2026, Doku seit 21.09.2026'],
     ] },
     { titel: 'Lage', zeilen: [
       ['Adresse', 'Wagerenstrasse 17, 8610 Uster'],
