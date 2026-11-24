@@ -13,7 +13,7 @@ Läuft direkt im Browser, ohne Build-Schritt.
 - Drei Farbstimmungen (Sand, Salbei, Warmgrau) als Interpretation des Farb- und Materialkonzepts
 - Sonnenstand für Uster mit Monatswahl und Regler für die Tageszeit
 - Eckdaten zu Preis, Flächen, allen Wohnungen, Haustechnik, Budgets, Zahlungsmodus, Terminen und Lage
-- Seite "Alle Unterlagen" (`unterlagen.html`): Preisliste, Vergleich A 001 / B 001, Baubeschrieb, Budgets, Baugesuch, Lage, Galerie, alle 11 Pläne
+- Seite "Alle Unterlagen" (`unterlagen.html`): Preisliste, Vergleich A 001 / B 001, Untergeschoss und Tiefgarage mit Ein-/Ausfahrt, Baubeschrieb, Budgets, Baugesuch, Lage mit Lageplan, Galerie, alle 11 Pläne als ganze Seiten, Ansicht mit Untergeschoss
 
 ## Hinweise
 
